@@ -39,15 +39,26 @@ jobs:
 
           pip install oci-cli
 
-          # Debug: check env vars are set (hide values)
-          echo "=== Checking OCI env vars ==="
-          for v in OCI_CLI_USER OCI_CLI_TENANCY OCI_CLI_FINGERPRINT OCI_CLI_KEY_CONTENT OCI_CLI_REGION; do
-            if [ -z "${!v}" ]; then
-              echo "ERROR: $v is empty or not set"
-            else
-              echo "OK: $v is set (length=${#!v})"
-            fi
-          done
+          # Write OCI config and key file
+          mkdir -p "$HOME/.oci"
+          echo "${{ secrets.OCI_CLI_KEY_CONTENT }}" > "$HOME/.oci/oci_api_key.pem"
+          chmod 600 "$HOME/.oci/oci_api_key.pem"
+
+          if [ ! -s "$HOME/.oci/oci_api_key.pem" ]; then
+            echo "ERROR: Key file is empty. Check OCI_CLI_KEY_CONTENT secret."
+            exit 1
+          fi
+
+          echo "[DEFAULT]" > "$HOME/.oci/config"
+          echo "user=${{ secrets.OCI_CLI_USER }}" >> "$HOME/.oci/config"
+          echo "tenancy=${{ secrets.OCI_CLI_TENANCY }}" >> "$HOME/.oci/config"
+          echo "fingerprint=${{ secrets.OCI_CLI_FINGERPRINT }}" >> "$HOME/.oci/config"
+          echo "key_file=$HOME/.oci/oci_api_key.pem" >> "$HOME/.oci/config"
+          echo "region=$OCI_CLI_REGION" >> "$HOME/.oci/config"
+
+          echo "=== OCI config ==="
+          cat "$HOME/.oci/config"
+          echo "=== Key file length: $(wc -c < "$HOME/.oci/oci_api_key.pem") bytes ==="
 
           echo "${{ secrets.SSH_PUBLIC_KEY }}" > /home/runner/my_ssh_key.pub
 
