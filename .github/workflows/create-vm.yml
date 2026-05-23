@@ -39,6 +39,16 @@ jobs:
 
           pip install oci-cli
 
+          # Debug: check env vars are set (hide values)
+          echo "=== Checking OCI env vars ==="
+          for v in OCI_CLI_USER OCI_CLI_TENANCY OCI_CLI_FINGERPRINT OCI_CLI_KEY_CONTENT OCI_CLI_REGION; do
+            if [ -z "${!v}" ]; then
+              echo "ERROR: $v is empty or not set"
+            else
+              echo "OK: $v is set (length=${#!v})"
+            fi
+          done
+
           echo "${{ secrets.SSH_PUBLIC_KEY }}" > /home/runner/my_ssh_key.pub
 
           # Run the command, capture ALL output, and use '|| true' to prevent the script from exiting early.
@@ -53,6 +63,9 @@ jobs:
             --assign-public-ip true \
             --display-name "coolify-vm" \
             --boot-volume-size-in-gbs 200 2>&1 || true)
+
+          # Also print to step log for debugging
+          echo "$OCI_OUTPUT"
 
           # Store the log as a GitHub step output
           echo "log_data<<EOF" >> $GITHUB_OUTPUT
