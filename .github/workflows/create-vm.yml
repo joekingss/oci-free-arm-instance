@@ -59,6 +59,9 @@ jobs:
           echo "=== OCI config ==="
           cat "$HOME/.oci/config"
           echo "=== Key file length: $(wc -c < "$HOME/.oci/oci_api_key.pem") bytes ==="
+          echo "=== Computed fingerprint (verify against OCI console) ==="
+          openssl rsa -pubout -in "$HOME/.oci/oci_api_key.pem" -out /tmp/oci_pub.pem 2>/dev/null
+          openssl rsa -pubin -in /tmp/oci_pub.pem -outform DER 2>/dev/null | openssl md5 -c | awk '{print $2}'
 
           echo "${{ secrets.SSH_PUBLIC_KEY }}" > /home/runner/my_ssh_key.pub
 
